@@ -1,0 +1,6 @@
+/.bzr
+/.bzrignore
+*.pyc
+*.pyo
+*~
+\#*\#

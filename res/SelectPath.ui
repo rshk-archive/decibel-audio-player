@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+<requires lib="gtk+" version="2.16"/>
+<object class="GtkDialog" id="dlg">
+<property name="border_width">5</property>
+<property name="window_position">center-on-parent</property>
+<property name="type_hint">dialog</property>
+<child internal-child="vbox">
+<object class="GtkVBox" id="dialog-vbox1">
+<property name="spacing">6</property>
+<child>
+<object class="GtkVBox" id="vbox5">
+<property name="border_width">6</property>
+<property name="spacing">18</property>
+<child>
+<object class="GtkHBox" id="hbox2">
+<property name="spacing">6</property>
+<child>
+<object class="GtkVBox" id="vbox6">
+<property name="spacing">12</property>
+<child>
+<object class="GtkHBox" id="hbox4">
+<child>
+<object class="GtkLabel" id="label3">
+<property name="label" translatable="yes">Name:</property>
+</object>
+<packing>
+<property name="expand">False</property>
+<property name="position">0</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="position">0</property>
+</packing>
+</child>
+<child>
+<object class="GtkHBox" id="hbox5">
+<child>
+<object class="GtkLabel" id="label4">
+<property name="label" translatable="yes">Path:</property>
+</object>
+<packing>
+<property name="expand">False</property>
+<property name="position">0</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="position">1</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="expand">False</property>
+<property name="position">0</property>
+</packing>
+</child>
+<child>
+<object class="GtkVBox" id="vbox7">
+<property name="spacing">12</property>
+<child>
+<object class="GtkEntry" id="txt-name">
+<property name="can_focus">True</property>
+</object>
+<packing>
+<property name="position">0</property>
+</packing>
+</child>
+<child>
+<object class="GtkHBox" id="hbox3">
+<property name="spacing">12</property>
+<child>
+<object class="GtkEntry" id="txt-path">
+<property name="can_focus">True</property>
+</object>
+<packing>
+<property name="position">0</property>
+</packing>
+</child>
+<child>
+<object class="GtkHButtonBox" id="hbuttonbox4">
+<child>
+<object class="GtkButton" id="btn-open">
+<property name="label">gtk-open</property>
+<property name="can_focus">True</property>
+<property name="receives_default">True</property>
+<property name="use_stock">True</property>
+</object>
+<packing>
+<property name="expand">False</property>
+<property name="fill">False</property>
+<property name="position">0</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="position">1</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="position">1</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="position">1</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="position">0</property>
+</packing>
+</child>
+<child>
+<object class="GtkHSeparator" id="hseparator2"/>
+<packing>
+<property name="expand">False</property>
+<property name="position">1</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="position">1</property>
+</packing>
+</child>
+<child internal-child="action_area">
+<object class="GtkHButtonBox" id="dialog-action_area1">
+<property name="layout_style">end</property>
+<child>
+<object class="GtkButton" id="btn-cancel">
+<property name="label">gtk-cancel</property>
+<property name="can_focus">True</property>
+<property name="receives_default">True</property>
+<property name="use_stock">True</property>
+</object>
+<packing>
+<property name="expand">False</property>
+<property name="fill">False</property>
+<property name="position">0</property>
+</packing>
+</child>
+<child>
+<object class="GtkButton" id="btn-ok">
+<property name="label">gtk-ok</property>
+<property name="can_focus">True</property>
+<property name="receives_default">True</property>
+<property name="use_stock">True</property>
+</object>
+<packing>
+<property name="expand">False</property>
+<property name="fill">False</property>
+<property name="position">1</property>
+</packing>
+</child>
+</object>
+<packing>
+<property name="expand">False</property>
+<property name="pack_type">end</property>
+<property name="position">0</property>
+</packing>
+</child>
+</object>
+</child>
+<action-widgets>
+<action-widget response="-6">btn-cancel</action-widget>
+<action-widget response="-5">btn-ok</action-widget>
+</action-widgets>
+</object>
+</interface>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+<requires lib="gtk+" version="2.16"/>
+<object class="GtkMenu" id="menu-popup">
+<child>
+<object class="GtkImageMenuItem" id="item-play">
+<property name="label">gtk-media-play</property>
+<property name="tooltip_text" translatable="yes">Play/Unpause</property>
+<property name="use_underline">True</property>
+<property name="use_stock">True</property>
+<property name="accel_group">accelgroup1</property>
+</object>
+</child>
+<child>
+<object class="GtkImageMenuItem" id="item-pause">
+<property name="label">gtk-media-pause</property>
+<property name="tooltip_text" translatable="yes">Pause the current track</property>
+<property name="use_underline">True</property>
+<property name="use_stock">True</property>
+<property name="accel_group">accelgroup1</property>
+</object>
+</child>
+<child>
+<object class="GtkImageMenuItem" id="item-stop">
+<property name="label">gtk-media-stop</property>
+<property name="tooltip_text" translatable="yes">Stop the current track</property>
+<property name="use_underline">True</property>
+<property name="use_stock">True</property>
+<property name="accel_group">accelgroup1</property>
+</object>
+</child>
+<child>
+<object class="GtkImageMenuItem" id="item-previous">
+<property name="label">gtk-media-previous</property>
+<property name="tooltip_text" translatable="yes">Play the previous track</property>
+<property name="use_underline">True</property>
+<property name="use_stock">True</property>
+<property name="accel_group">accelgroup1</property>
+</object>
+</child>
+<child>
+<object class="GtkImageMenuItem" id="item-next">
+<property name="label">gtk-media-next</property>
+<property name="tooltip_text" translatable="yes">Play the next track</property>
+<property name="use_underline">True</property>
+<property name="use_stock">True</property>
+<property name="accel_group">accelgroup1</property>
+</object>
+</child>
+<child>
+<object class="GtkSeparatorMenuItem" id="item-separator"/>
+</child>
+<child>
+<object class="GtkImageMenuItem" id="item-preferences">
+<property name="label">gtk-preferences</property>
+<property name="tooltip_text" translatable="yes">Display preferences</property>
+<property name="use_underline">True</property>
+<property name="use_stock">True</property>
+<property name="accel_group">accelgroup1</property>
+</object>
+</child>
+<child>
+<object class="GtkSeparatorMenuItem" id="item-separator2"/>
+</child>
+<child>
+<object class="GtkImageMenuItem" id="item-quit">
+<property name="label">gtk-quit</property>
+<property name="tooltip_text" translatable="yes">Quit the application</property>
+<property name="use_underline">True</property>
+<property name="use_stock">True</property>
+<property name="accel_group">accelgroup1</property>
+</object>
+</child>
+</object>
+<object class="GtkAccelGroup" id="accelgroup1"/>
+</interface>
