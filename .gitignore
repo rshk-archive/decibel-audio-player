@@ -4,3 +4,6 @@
 *.pyo
 *~
 \#*\#
+*.egg
+*.egg-info
+/.idea
