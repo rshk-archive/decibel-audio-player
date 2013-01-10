@@ -5,6 +5,8 @@ This is a fork of `Decibel Audio Player`_.
 
 .. _`Decibel Audio Player`: https://launchpad.net/decibel-audio-player
 
-:Authors: François Ingelrest
+:Authors: 
+  * François Ingelrest
+  * Samuele Santi
 :Website: http://decibel.silent-blade.org
 :License: GNU GPL v2
