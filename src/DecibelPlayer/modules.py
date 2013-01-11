@@ -18,28 +18,29 @@
 
 from __future__ import absolute_import
 
-import os, sys, threading, traceback
-import gobject, gtk
-from .. import gui
-import warnings
-
-from ..tools   import consts, prefs
-from ..tools.log import logger
+import os, sys, threading, traceback, warnings
 from gettext import gettext as _
 
+import gobject, gtk
 
-# Information exported by a module
-(
-    MODINFO_NAME,           # Name of the module, must be unique
-    MODINFO_L10N,           # Name translated into the current locale
-    MODINFO_DESC,           # Description of the module, translated into the current locale
-    MODINFO_DEPS,           # A list of special Python dependencies (e.g., pynotify)
-    MODINFO_MANDATORY,      # True if the module cannot be disabled
-    MODINFO_CONFIGURABLE,   # True if the module can be configured
-    MODINFO_CATEGORY,       # Category the module belongs to
-) = range(7)
+from . import gui
+from .tools   import consts, prefs
+from .tools.log import logger
+from .tools.consts import USER_PLUGINS_DIR
+
+
+# Information exported by a module -- DEPRECATED!!
+MODINFO_NAME=0           # Name of the module, must be unique
+MODINFO_L10N=1           # Name translated into the current locale
+MODINFO_DESC=2           # Description of the module, translated into the current locale
+MODINFO_DEPS=3           # A list of special Python dependencies (e.g., pynotify)
+MODINFO_MANDATORY=4      # True if the module cannot be disabled
+MODINFO_CONFIGURABLE=5   # True if the module can be configured
+MODINFO_CATEGORY=6       # Category the module belongs to
 
 def convert_modinfo(modinfo):
+    """Converts old-style to new-style MOD_INFO form plugins
+    """
     if not isinstance(modinfo, tuple):
         return modinfo
     warnings.warn("Deprecated MODINFO tuple format - use dict instead")
@@ -54,13 +55,18 @@ def convert_modinfo(modinfo):
     }
 
 
-# Values associated with a module
-(
-    MOD_PMODULE,      # The actual Python module object
-    MOD_CLASSNAME,    # The classname of the module
-    MOD_INSTANCE,     # Instance, None if not currently enabled
-    MOD_INFO          # A tuple exported by the module, see above definition
-) = range(4)
+## Values associated with a module
+MOD_PMODULE = 0
+'''The actual Python module object'''
+
+MOD_CLASSNAME = 1
+'''The classname of the module'''
+
+MOD_INSTANCE = 2
+'''Instance, None if not currently enabled'''
+
+MOD_INFO = 3
+'''A tuple exported by the module, see above definition'''
 
 
 class LoadException(Exception):
@@ -79,15 +85,17 @@ def __checkDeps(deps):
     """ Given a list of Python modules, return a list of the modules that are unavailable """
     unmetDeps = []
     for module in deps:
-        try:    __import__(module)
-        except: unmetDeps.append(module)
+        try:
+            __import__(module)
+        except:
+            unmetDeps.append(module)
     return unmetDeps
 
 
 def load(name):
     """ Load the given module, may raise LoadException """
     mModulesLock.acquire()
-    module = mModules[name]
+    module = plugins[name]
     mModulesLock.release()
 
     # Check dependencies
@@ -111,8 +119,8 @@ def load(name):
         mHandlersLock.release()
 
         logger.info('Module loaded: %s' % module[MOD_CLASSNAME])
-        mEnabledModules.append(name)
-        prefs.set(__name__, 'enabled_modules', mEnabledModules)
+        plugins_enabled.append(name)
+        prefs.set(__name__, 'enabled_modules', plugins_enabled)
     except:
         raise LoadException, traceback.format_exc()
 
@@ -120,7 +128,7 @@ def load(name):
 def unload(name):
     """ Unload the given module """
     mModulesLock.acquire()
-    module               = mModules[name]
+    module               = plugins[name]
     instance             = module[MOD_INSTANCE]
     module[MOD_INSTANCE] = None
     mModulesLock.release()
@@ -132,15 +140,15 @@ def unload(name):
             handlers.remove(instance)
         mHandlersLock.release()
 
-        mEnabledModules.remove(name)
+        plugins_enabled.remove(name)
         logger.info('Module unloaded: %s' % module[MOD_CLASSNAME])
-        prefs.set(__name__, 'enabled_modules', mEnabledModules)
+        prefs.set(__name__, 'enabled_modules', plugins_enabled)
 
 
 def getModules():
     """ Return a copy of all known modules """
     mModulesLock.acquire()
-    copy = mModules.items()
+    copy = plugins.items()
     mModulesLock.release()
     return copy
 
@@ -155,32 +163,36 @@ def register(module, msgList):
 
 def showPreferences():
     """ Show the preferences dialog box """
-    from ..gui import preferences as gui_preferences
+    from .gui import preferences as gui_preferences
     gobject.idle_add(gui_preferences.show)
 
 
-def __postMsg(msg, params={}):
+def __postMsg(msg, params=None):
     """ This is the 'real' postMsg function, which must be executed in the GTK main loop """
+    if params is None:
+        params = {}
     mHandlersLock.acquire()
     for module in mHandlers[msg]:
         module.postMsg(msg, params)
     mHandlersLock.release()
 
 
-def postMsg(msg, params={}):
+def postMsg(msg, params=None):
     """ Post a message to the queue of modules that registered for this type of message """
     # We need to ensure that posting messages will be done by the GTK main loop
     # Otherwise, the code of threaded modules could be executed in the caller's thread, which could cause problems when calling GTK functions
+    if params is None:
+        params = {}
     gobject.idle_add(__postMsg, msg, params)
 
 
 def __postQuitMsg():
     """ This is the 'real' postQuitMsg function, which must be executed in the GTK main loop """
     __postMsg(consts.MSG_EVT_APP_QUIT)
-    for modData in mModules.itervalues():
+    for modData in plugins.itervalues():
         if modData[MOD_INSTANCE] is not None:
             modData[MOD_INSTANCE].join()
-    # Don't exit the application right now, let modules do their job before
+        # Don't exit the application right now, let modules do their job before
     gobject.idle_add(gtk.main_quit)
 
 
@@ -300,7 +312,8 @@ class Module(ModuleBase):
         self.handlers = handlers
         register(self, handlers.keys())
 
-    def postMsg(self, msg, params={}):
+    def postMsg(self, msg, params=None):
+        if params is None: params = {}
         gobject.idle_add(self.__dispatch, msg, params)
 
     def __dispatch(self, msg, params):
@@ -349,8 +362,9 @@ class ThreadedModule(threading.Thread, ModuleBase):
         """
         self.postMsg(consts.MSG_CMD_THREAD_EXECUTE, (func, args))
 
-    def postMsg(self, msg, params={}):
+    def postMsg(self, msg, params=None):
         """ Enqueue a message in this threads's message queue """
+        if params is None: params = {}
         self.queue.put((msg, params))
 
     def run(self):
@@ -368,39 +382,90 @@ class ThreadedModule(threading.Thread, ModuleBase):
 
 # --== Entry point ==--
 
-logger.debug("Scanning modules..")
+import pkgutil, imp
+import DecibelPlayer
 
-mModDir         = os.path.dirname(__file__)                                    # Where modules are located
-mModules        = {}                                                           # All known modules associated to an 'active' boolean
+MODULES_SEARCH_PATH = (
+    os.path.join(os.path.dirname(DecibelPlayer.__file__), 'plugins'),
+    USER_PLUGINS_DIR,
+)
+
+
+def discover_plugins():
+    modules = {}
+    for search_dir in MODULES_SEARCH_PATH:
+        for mod in pkgutil.iter_modules([search_dir]):
+            try:
+                import_path = [search_dir] + sys.path
+                module = imp.load_module(mod[1], *imp.find_module(mod[1], import_path))
+                modules[mod[1]] = module
+            except:
+                #logger.exception("Module failed to load ({name})".format(name=mod[1]))
+                logger.debug("Module failed to load ({name})".format(name=mod[1]))
+    return modules
+
+
+#mModDir         = os.path.dirname(__file__)                                    # Where modules are located
+plugins        = {}                                                           # All known modules associated to an 'active' boolean
 mHandlers       = dict([(msg, set()) for msg in xrange(consts.MSG_END_VALUE)]) # For each message, store the set of registered modules
 mModulesLock    = threading.Lock()                                             # Protects the modules list from concurrent access
 mHandlersLock   = threading.Lock()                                             # Protects the handlers list from concurrent access
-mEnabledModules = prefs.get(__name__, 'enabled_modules', [])                   # List of modules currently enabled
+plugins_enabled = prefs.get(__name__, 'enabled_modules', [])                   # List of modules currently enabled
 
 
-# Find modules, instantiate those that are mandatory or that have been previously enabled by the user
-sys.path.append(mModDir)
-for file in [os.path.splitext(file)[0] for file in os.listdir(mModDir) if file.endswith('.py') and file != '__init__.py']:
+### Find modules, instantiate those that are mandatory or that have been previously enabled by the user
+#sys.path.append(mModDir)
+#for file in [os.path.splitext(file)[0] for file in os.listdir(mModDir) if file.endswith('.py') and file != '__init__.py']:
+#    try:
+#        pModule = __import__(file)
+#        modInfo = getattr(pModule, 'MOD_INFO')
+#        modInfo = convert_modinfo(modInfo)
+#
+#        # Should it be instanciated?
+#        instance = None
+#        if modInfo['mandatory'] or modInfo['name'] in mEnabledModules:
+#            if len(__checkDeps(modInfo[MODINFO_DEPS])) == 0:
+#                instance = getattr(pModule, file)()
+#                instance.start()
+#                logger.info('Module loaded: %s' % file)
+#            else:
+#                logger.error('Unable to load module %s because of missing dependencies' % file)
+#
+#        # Add it to the dictionary
+#        mModules[modInfo[MODINFO_NAME]] = [pModule, file, instance, modInfo]
+#    except:
+#        logger.error('Unable to load module %s\n\n%s' % (file, traceback.format_exc()))
+
+
+## Find modules, instantiate those that are mandatory
+## or that have been previously enabled by the user
+for mod_id, module in discover_plugins().iteritems():
     try:
-        pModule = __import__(file)
-        modInfo = getattr(pModule, 'MOD_INFO')
-        modInfo = convert_modinfo(modInfo)
+        mod_info = convert_modinfo(module.MOD_INFO)
 
-        # Should it be instanciated?
+        ## Should it be loaded?
         instance = None
-        if modInfo['mandatory'] or modInfo['name'] in mEnabledModules:
-            if len(__checkDeps(modInfo[MODINFO_DEPS])) == 0:
-                instance = getattr(pModule, file)()
+        if mod_info['mandatory'] or (mod_info['name'] in plugins_enabled):
+            if len(__checkDeps(mod_info[MODINFO_DEPS])) == 0:
+                instance = module.PLUGIN()
                 instance.start()
                 logger.info('Module loaded: %s' % file)
             else:
                 logger.error('Unable to load module %s because of missing dependencies' % file)
 
-        # Add it to the dictionary
-        mModules[modInfo[MODINFO_NAME]] = [pModule, file, instance, modInfo]
+        ## Add it to the plugins list
+        plugins[mod_info[MODINFO_NAME]] = [module, file, instance, mod_info]
+
     except:
         logger.error('Unable to load module %s\n\n%s' % (file, traceback.format_exc()))
 
 # Remove enabled modules that are no longer available
-mEnabledModules[:] = [module for module in mEnabledModules if module in mModules]
-prefs.set(__name__, 'enabled_modules', mEnabledModules)
+plugins_enabled[:] = [
+    module for module in plugins_enabled
+        if module in plugins
+]
+prefs.set(
+    __name__,
+    'enabled_modules',
+    plugins_enabled,
+)

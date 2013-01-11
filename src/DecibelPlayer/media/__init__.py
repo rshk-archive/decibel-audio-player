@@ -44,11 +44,14 @@ mFormats = {
     '.wv': wavpack,
 }
 
+## todo: use python-magic to determine file type, instead of extension!
 
-def isSupported(file):
-    """ Return True if the given file is a supported format """
-    try:    return splitext(file.lower())[1] in mFormats
-    except: return False
+def isSupported(filename):
+    """Return True if the given file is a supported format"""
+    try:
+        return splitext(filename.lower())[1] in mFormats
+    except:
+        return False
 
 
 def getSupportedFormats():
@@ -56,28 +59,34 @@ def getSupportedFormats():
     return ['*' + ext for ext in mFormats]
 
 
-def getTrackFromFile(file):
+def getTrackFromFile(filename):
     """
-        Return a Track object, based on the tags of the given file
-        The 'file' parameter must be a real file (not a playlist or a directory)
+    Return a Track object, based on the tags of the given file
+    The 'file' parameter must be a real file (not a playlist or a directory)
     """
     try:
-        return mFormats[splitext(file.lower())[1]].getTrack(file)
+        return mFormats[splitext(filename.lower())[1]].getTrack(filename)
+
     except:
-        logger.error('Unable to extract information from %s\n\n%s' % (file, traceback.format_exc()))
-        return FileTrack(file)
+        logger.exception('Unable to extract information from %s' % filename)
+        return FileTrack(filename)
 
 
 def getTracksFromFiles(files):
     """ Same as getTrackFromFile(), but works on a list of files instead of a single one """
-    return [getTrackFromFile(file) for file in files]
+    return [getTrackFromFile(f) for f in files]
 
 
 def getTracks(filenames, sortByFilename=False, ignoreHiddenFiles=True):
     """
-        Same as getTracksFromFiles(), but works for any kind of filenames (files, playlists, directories)
-        If sortByFilename is True, files loaded from directories are sorted by filename instead of tags
-        If ignoreHiddenFiles is True, hidden files are ignored when walking directories
+    Same as getTracksFromFiles(), but works for any kind of filenames
+    (files, playlists, directories)
+
+    If sortByFilename is True, files loaded from directories are sorted
+    by filename instead of tags
+
+    If ignoreHiddenFiles is True, hidden files are ignored when walking
+    directories
     """
     allTracks = []
 
@@ -87,20 +96,32 @@ def getTracks(filenames, sortByFilename=False, ignoreHiddenFiles=True):
         for root, subdirs, files in os.walk(directory):
             for file in files:
                if not ignoreHiddenFiles or file[0] != '.':
-                    if isSupported(file):            mediaFiles.append(os.path.join(root, file))
-                    elif playlist.isSupported(file): playlists.append(os.path.join(root, file))
+                    if isSupported(file):
+                        mediaFiles.append(os.path.join(root, file))
+                    elif playlist.isSupported(file):
+                        playlists.append(os.path.join(root, file))
 
-        if sortByFilename: allTracks.extend(sorted(getTracksFromFiles(mediaFiles), lambda t1, t2: cmp(t1.getFilePath(), t2.getFilePath())))
-        else:              allTracks.extend(sorted(getTracksFromFiles(mediaFiles)))
+        if sortByFilename:
+            allTracks.extend(sorted(
+                getTracksFromFiles(mediaFiles),
+                lambda t1, t2: cmp(t1.getFilePath(), t2.getFilePath())))
+        else:
+            allTracks.extend(sorted(getTracksFromFiles(mediaFiles)))
 
         for pl in playlists:
             allTracks.extend(getTracksFromFiles(playlist.load(pl)))
 
     # Files
-    tracks = getTracksFromFiles([filename for filename in filenames if os.path.isfile(filename) and isSupported(filename)])
+    tracks = getTracksFromFiles([
+        filename for filename in filenames
+            if os.path.isfile(filename) and isSupported(filename)
+    ])
 
-    if sortByFilename: allTracks.extend(sorted(tracks, lambda t1, t2: cmp(t1.getFilePath(), t2.getFilePath())))
-    else:              allTracks.extend(sorted(tracks))
+    if sortByFilename:
+        allTracks.extend(sorted(tracks, key=lambda x: x.getFilePath()))
+
+    else:
+        allTracks.extend(sorted(tracks))
 
     # Playlists
     for pl in [filename for filename in filenames if os.path.isfile(filename) and playlist.isSupported(filename)]:

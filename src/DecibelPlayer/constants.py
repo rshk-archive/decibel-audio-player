@@ -16,62 +16,80 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-import gtk, os.path, random, time
-
+import os.path, random, time
 from gettext import gettext as _
+import gtk
 
-# --- Not a constant, but it fits well here
+
+## Not a constant, but it fits well here
 random.seed(int(time.time()))
 
 
-# --- Miscellaneous
+## Miscellaneous
 socketTimeout = 10
 
 
-# --- Strings
+## Strings
 appName      = 'Decibel Audio Player'
-appVersion   = '1.09'
+appVersion   = '1.09' ## todo: take this from a single-place..
 appNameShort = 'decibel-audio-player'
 
 
-# --- URLs
+## URLs
 urlMain = 'http://decibel.silent-blade.org'
 urlHelp = 'http://decibel.silent-blade.org/index.php?n=Main.Help'
 
 
-# --- Directories
+## Directories
 dirBaseUsr = os.path.expanduser('~')
 dirBaseCfg = os.path.join(dirBaseUsr, '.config')
 dirBaseSrc = os.path.join(os.path.dirname(__file__), '..', '..')
 
+from DecibelPlayer import assets
+assets_dir = os.path.dirname(assets.__file__)
+
 dirRes = os.path.join(dirBaseSrc, '..', 'res')
 dirDoc = os.path.join(dirBaseSrc, '..', 'doc')
-dirPix = os.path.join(dirBaseSrc, '..', 'pix')
-dirCfg = os.path.join(dirBaseCfg, appNameShort)
-dirLog = os.path.join(dirCfg, 'Logs')
+dirPix = os.path.join(assets_dir, 'icons')
+USER_CONFIG_DIR = os.path.join(dirBaseCfg, appNameShort)
+dirLog = os.path.join(USER_CONFIG_DIR, 'Logs')
+
+## todo: DO NOT CREATE DIRECTORIES HERE, THIS IS NOT THE FUCKING RIGHT PLACE TO DO THAT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 dirLocale = os.path.join(dirBaseSrc, '..', 'locale')
-if not os.path.isdir(dirLocale) :
+if not os.path.isdir(dirLocale):
     dirLocale = os.path.join(dirBaseSrc, '..', '..', 'locale')
 
 # Make sure the config directory exists
 if not os.path.exists(dirBaseCfg):
     os.mkdir(dirBaseCfg)
 
-if not os.path.exists(dirCfg):
-    os.mkdir(dirCfg)
+if not os.path.exists(USER_CONFIG_DIR):
+    os.mkdir(USER_CONFIG_DIR)
 
 # Make sure the log directory exists
-if not os.path.exists(dirLog): os.mkdir(dirLog)
+if not os.path.exists(dirLog):
+    os.mkdir(dirLog)
+
+## Directory in which the user may store extra plugins
+USER_PLUGINS_DIR = os.path.join(USER_CONFIG_DIR, 'plugins')
 
 
-# --- Icons
-fileImgIcon16  = os.path.join(dirPix, 'decibel-audio-player-16.png')
-fileImgIcon24  = os.path.join(dirPix, 'decibel-audio-player-24.png')
-fileImgIcon32  = os.path.join(dirPix, 'decibel-audio-player-32.png')
-fileImgIcon48  = os.path.join(dirPix, 'decibel-audio-player-48.png')
-fileImgIcon64  = os.path.join(dirPix, 'decibel-audio-player-64.png')
-fileImgIcon128 = os.path.join(dirPix, 'decibel-audio-player-128.png')
+## Icons -----------------------------------------------------------------------
+
+APP_ICONS = {}
+
+for size in (16, 24, 32, 48, 64, 128):
+    APP_ICONS[size] = os.path.join(dirPix, 'decibel-audio-player-%s.png' % size)
+
+## todo: remove this! -> only use the APP_ICONS thing..
+fileImgIcon16  = APP_ICONS[16]
+fileImgIcon24  = APP_ICONS[24]
+fileImgIcon32  = APP_ICONS[32]
+fileImgIcon48  = APP_ICONS[48]
+fileImgIcon64  = APP_ICONS[64]
+fileImgIcon128 = APP_ICONS[128]
+
 
 fileImgStar16 = os.path.join(dirPix, 'star-16.png')
 
@@ -82,18 +100,18 @@ fileImgCatExplorer = os.path.join(dirPix, 'category-explorer.png')
 fileImgCatInternet = os.path.join(dirPix, 'category-internet.png')
 
 
-# --- Files
+## Files -----------------------------------------------------------------------
 fileLog     = os.path.join(dirLog, 'log')
-filePrefs   = os.path.join(dirCfg, 'prefs.txt')
+filePrefs   = os.path.join(USER_CONFIG_DIR, 'prefs.txt')
 fileLicense = os.path.join(dirDoc, 'LICENCE')
 
 
-# --- DBus constants
+## DBus constants --------------------------------------------------------------
 dbusService   = 'org.mpris.dap'
 dbusInterface = 'org.freedesktop.MediaPlayer'
 
 
-# --- Tracks
+## Tracks
 UNKNOWN_DATE         = 0
 UNKNOWN_GENRE        = _('Unknown Genre')
 UNKNOWN_TITLE        = _('Unknown Title')
@@ -109,43 +127,37 @@ UNKNOWN_TRACK_NUMBER = 0
 UNKNOWN_ALBUM_ARTIST = _('Unknown Album Artist')
 
 
-# --- Drag'n'Drop
-(
-    DND_URI,          # From another application (e.g., from Nautilus)
-    DND_DAP_URI,      # Inside DAP when tags are not known (e.g., from the FileExplorer)
-    DND_DAP_TRACKS    # Inside DAP when tags are already known (e.g., from the Library)
-) = range(3)
+## Drag'n'Drop
+DND_URI = 0          # From another application (e.g., from Nautilus)
+DND_DAP_URI = 1      # Inside DAP when tags are not known (e.g., from the FileExplorer)
+DND_DAP_TRACKS = 2   # Inside DAP when tags are already known (e.g., from the Library)
 
 DND_TARGETS = {
-                DND_URI:        ('text/uri-list',   0,                   DND_URI),
-                DND_DAP_URI:    ('dap/uri-list',    gtk.TARGET_SAME_APP, DND_DAP_URI),
-                DND_DAP_TRACKS: ('dap/tracks-list', gtk.TARGET_SAME_APP, DND_DAP_TRACKS)
-              }
+    DND_URI:        ('text/uri-list',   0,                   DND_URI),
+    DND_DAP_URI:    ('dap/uri-list',    gtk.TARGET_SAME_APP, DND_DAP_URI),
+    DND_DAP_TRACKS: ('dap/tracks-list', gtk.TARGET_SAME_APP, DND_DAP_TRACKS)
+}
 
 
-# --- View modes
-# --- Don't change the order!
-(
-    VIEW_MODE_FULL,
-    VIEW_MODE_LEAN,
-    VIEW_MODE_MINI,
-    VIEW_MODE_PLAYLIST,
-    VIEW_MODE_NETBOOK,
-) = range(5)
+## View modes
+VIEW_MODE_FULL = 0
+VIEW_MODE_LEAN = 1
+VIEW_MODE_MINI = 2
+VIEW_MODE_PLAYLIST = 3
+VIEW_MODE_NETBOOK = 4
 
 
 # -- Categories a module can belong to
-(
-    MODCAT_NONE,
-    MODCAT_DECIBEL,
-    MODCAT_DESKTOP,
-    MODCAT_INTERNET,
-    MODCAT_EXPLORER,
-) = range(5)
+MODCAT_NONE = 0
+MODCAT_DECIBEL = 1
+MODCAT_DESKTOP = 2
+MODCAT_INTERNET = 3
+MODCAT_EXPLORER = 4
 
 
-# --- Message that can be sent/received by modules
-# --- A message is always associated with a (potentially empty) dictionnary containing its parameters
+## Message that can be sent/received by modules
+## A message is always associated with a (potentially empty)
+## dict containing its parameters
 (
     # --== COMMANDS ==--
 

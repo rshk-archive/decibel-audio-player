@@ -1,0 +1,4 @@
+"""
+Base manager for plugins
+"""
+

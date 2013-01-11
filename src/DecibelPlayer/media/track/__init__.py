@@ -236,6 +236,9 @@ class Track:
 
     def format(self, fmtString):
         """ Replace the special fields in the given string by their corresponding value """
+
+        ### WTF??
+
         result = fmtString
 
         result = result.replace( '{path}',         self.getFilePath()         )

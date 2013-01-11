@@ -83,7 +83,7 @@ MOD_L10N = MOD_INFO[modules.MODINFO_L10N]
 
 # Constants
 VERSION                           = 4                                      # Used to check compatibility
-ROOT_PATH                         = os.path.join(consts.dirCfg, 'Library') # Path where libraries are stored
+ROOT_PATH                         = os.path.join(consts.USER_CONFIG_DIR, 'Library') # Path where libraries are stored
 FAKE_CHILD                        = (None, None, '', TYPE_NONE, '', None)  # We use a lazy tree
 PREFS_DEFAULT_PREFIXES            = {'the ': None}                         # Prefixes are put at the end of artists' names
 PREFS_DEFAULT_LIBRARIES           = {}                                     # No libraries at first

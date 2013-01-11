@@ -20,12 +20,21 @@ from __future__ import absolute_import
 
 from time  import time
 import gobject
-from .. import modules
-from ..tools import consts, prefs
-from ..media import audioplayer
+from DecibelPlayer import modules
+from DecibelPlayer.tools import consts, prefs
+from DecibelPlayer.media import audioplayer
 
 
-MOD_INFO           = ('GStreamer Player', 'GStreamer Player', '', [], True, False, consts.MODCAT_NONE)
+MOD_INFO = (
+    'GStreamer Player',
+    'GStreamer Player',
+    '',
+    [],
+    True,
+    False,
+    consts.MODCAT_NONE,
+)
+
 MIN_PLAYBACK_DELAY = 1.5
 
 
@@ -38,19 +47,19 @@ class GSTPlayer(modules.Module):
         self.player = audioplayer.AudioPlayer(self.__onTrackEnded, not prefs.getCmdLine()[0].playbin)
 
         handlers = {
-                        consts.MSG_CMD_STEP:         self.onStep,
-                        consts.MSG_CMD_STOP:         self.onStop,
-                        consts.MSG_CMD_PLAY:         self.onPlay,
-                        consts.MSG_CMD_SEEK:         self.onSeek,
-                        consts.MSG_CMD_BUFFER:       self.onBuffer,
-                        consts.MSG_CMD_ENABLE_RG:    self.onEnableReplayGain,
-                        consts.MSG_CMD_ENABLE_EQZ:   self.onEnableEqualizer,
-                        consts.MSG_CMD_SET_VOLUME:   self.onSetVolume,
-                        consts.MSG_EVT_APP_STARTED:  self.onAppStarted,
-                        consts.MSG_CMD_SET_CD_SPEED: self.onSetCDSpeed,
-                        consts.MSG_CMD_TOGGLE_PAUSE: self.onTogglePause,
-                        consts.MSG_CMD_SET_EQZ_LVLS: self.onSetEqualizerLevels,
-                   }
+            consts.MSG_CMD_STEP:         self.onStep,
+            consts.MSG_CMD_STOP:         self.onStop,
+            consts.MSG_CMD_PLAY:         self.onPlay,
+            consts.MSG_CMD_SEEK:         self.onSeek,
+            consts.MSG_CMD_BUFFER:       self.onBuffer,
+            consts.MSG_CMD_ENABLE_RG:    self.onEnableReplayGain,
+            consts.MSG_CMD_ENABLE_EQZ:   self.onEnableEqualizer,
+            consts.MSG_CMD_SET_VOLUME:   self.onSetVolume,
+            consts.MSG_EVT_APP_STARTED:  self.onAppStarted,
+            consts.MSG_CMD_SET_CD_SPEED: self.onSetCDSpeed,
+            consts.MSG_CMD_TOGGLE_PAUSE: self.onTogglePause,
+            consts.MSG_CMD_SET_EQZ_LVLS: self.onSetEqualizerLevels,
+        }
 
         modules.Module.__init__(self, handlers)
 
@@ -207,9 +216,9 @@ class GSTPlayer(modules.Module):
         self.player.enableEqualizer()
 
 
-    def onSetEqualizerLevels(self, lvls):
+    def onSetEqualizerLevels(self, levels):
         """ Set the equalizer levels """
-        self.player.setEqualizerLvls(lvls)
+        self.player.setEqualizerLevels(levels)
 
 
     def onSetCDSpeed(self, speed):

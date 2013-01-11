@@ -19,7 +19,7 @@
 from __future__ import absolute_import
 
 import os.path
-from .. import media
+from DecibelPlayer import media
 
 def isSupported(file):
     """ Return True if the file has a supported format """

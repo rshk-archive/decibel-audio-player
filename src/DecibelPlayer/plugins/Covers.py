@@ -337,7 +337,7 @@ class Covers(modules.ThreadedModule):
         self.cfgWin         = None                                   # Configuration window
         self.coverMap       = {}                                     # Store covers previously requested
         self.currTrack      = None                                   # The current track being played, if any
-        self.cacheRootPath  = os.path.join(consts.dirCfg, MOD_NAME)  # Local cache for Internet covers
+        self.cacheRootPath  = os.path.join(consts.USER_CONFIG_DIR, MOD_NAME)  # Local cache for Internet covers
         self.coverBlacklist = {}                                     # When a cover cannot be downloaded, avoid requesting it again
 
         if not os.path.exists(self.cacheRootPath):

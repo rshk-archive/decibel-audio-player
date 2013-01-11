@@ -18,44 +18,47 @@
 
 import dbus, os, sys
 
-(
-    PLAY,
-    PAUSE,
-    NEXT,
-    PREVIOUS,
-    STOP,
-    SET,
-    ADD,
-    CLEAR,
-    SHUFFLE,
-    VOLUME,
-) = range(10)
+PLAY = 0
+PAUSE = 1
+NEXT = 2
+PREVIOUS = 3
+STOP = 4
+SET = 5
+ADD = 6
+CLEAR = 7
+SHUFFLE = 8
+VOLUME = 9
 
-(CMD_ARGS, CMD_HELP, CMD_NAME) = range(3)
+CMD_ARGS = 0
+CMD_HELP = 1
+CMD_NAME = 2
 
 commands = {
-                'play':    ( '',                 'Start playing the current track',             PLAY    ),
-                'pause':   ( '',                 'Pause or continue playing the current track', PAUSE   ),
-                'next':    ( '',                 'Jump to the next track',                      NEXT    ),
-                'prev':    ( '',                 'Jump to the previous track',                  PREVIOUS),
-                'stop':    ( '',                 'Stop playback',                               STOP    ),
-                'pl-set':  ( 'file1 file2...',   'Set the playlist to the given files',         SET     ),
-                'pl-add':  ( 'file1 file2...',   'Append the given files to the playlist',      ADD     ),
-                'pl-clr':  ( '',                 'Clear the playlist',                          CLEAR   ),
-                'shuffle': ( '',                 'Shuffle the playlist',                        SHUFFLE ),
-                'volume':  ( 'value (0 -- 100)', 'Set the volume',                              VOLUME  ),
-           }
+    'play':    ( '',                 'Start playing the current track',             PLAY    ),
+    'pause':   ( '',                 'Pause or continue playing the current track', PAUSE   ),
+    'next':    ( '',                 'Jump to the next track',                      NEXT    ),
+    'prev':    ( '',                 'Jump to the previous track',                  PREVIOUS),
+    'stop':    ( '',                 'Stop playback',                               STOP    ),
+    'pl-set':  ( 'file1 file2...',   'Set the playlist to the given files',         SET     ),
+    'pl-add':  ( 'file1 file2...',   'Append the given files to the playlist',      ADD     ),
+    'pl-clr':  ( '',                 'Clear the playlist',                          CLEAR   ),
+    'shuffle': ( '',                 'Shuffle the playlist',                        SHUFFLE ),
+    'volume':  ( 'value (0 -- 100)', 'Set the volume',                              VOLUME  ),
+}
 
 # Check the command line
 cmdLineOk = False
 
 if len(sys.argv) > 1:
     cmdName = sys.argv[1]
-
-    if cmdName not in commands:                                    print '%s is not a valid command\n'     % cmdName
-    elif len(sys.argv) == 2 and commands[cmdName][CMD_ARGS] != '': print '%s needs some arguments\n'       % cmdName
-    elif len(sys.argv) > 2 and commands[cmdName][CMD_ARGS] == '':  print '%s does not take any argument\n' % cmdName
-    else:                                                          cmdLineOk = True
+    if cmdName not in commands:
+        print '%s is not a valid command\n'     % cmdName
+    elif len(sys.argv) == 2 and commands[cmdName][CMD_ARGS] != '':
+        print '%s needs some arguments\n'       % cmdName
+    elif len(sys.argv) > 2 and commands[cmdName][CMD_ARGS] == '':
+        print '%s does not take any argument\n' % cmdName
+    else:
+        cmdLineOk = True
 
 if not cmdLineOk:
     print 'Usage: %s command [arg1 arg2...]\n' % os.path.basename(sys.argv[0])
@@ -65,29 +68,43 @@ if not cmdLineOk:
         print '%s| %s| %s' % (cmd.ljust(9), data[CMD_ARGS].ljust(17), data[CMD_HELP])
     sys.exit(1)
 
-# Make sure that paths are absolute
+## Make sure that paths are absolute
 if commands[cmdName][CMD_NAME] in (ADD, SET):
     absPaths = [os.path.join(os.getcwd(), path) for path in sys.argv[2:]]
 
-# Connect to D-BUS
+## Connect to D-BUS
 session        = dbus.SessionBus()
-activeServices = session.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus').ListNames()
+activeServices = session.get_object('org.freedesktop.DBus',
+    '/org/freedesktop/DBus').ListNames()
 
 if 'org.mpris.dap' not in activeServices:
     print 'Decibel Audio Player is not running, or D-Bus support is not available'
     sys.exit(2)
 
-cmd       = commands[cmdName][CMD_NAME]
-player    = dbus.Interface(session.get_object('org.mpris.dap', '/Player'),    'org.freedesktop.MediaPlayer')
-tracklist = dbus.Interface(session.get_object('org.mpris.dap', '/TrackList'), 'org.freedesktop.MediaPlayer')
+cmd = commands[cmdName][CMD_NAME]
+player = dbus.Interface(session.get_object('org.mpris.dap', '/Player'),
+    'org.freedesktop.MediaPlayer')
+tracklist = dbus.Interface(session.get_object('org.mpris.dap', '/TrackList'),
+    'org.freedesktop.MediaPlayer')
 
-if   cmd == SET:      tracklist.SetTracks(absPaths, True)
-elif cmd == ADD:      tracklist.AddTracks(absPaths, False)
-elif cmd == PLAY:     player.Play()
-elif cmd == NEXT:     player.Next()
-elif cmd == STOP:     player.Stop()
-elif cmd == PAUSE:    player.Pause()
-elif cmd == CLEAR:    tracklist.Clear()
-elif cmd == VOLUME:   player.VolumeSet(int(sys.argv[2]))
-elif cmd == SHUFFLE:  tracklist.SetRandom(True)
-elif cmd == PREVIOUS: player.Prev()
+
+if   cmd == SET:
+    tracklist.SetTracks(absPaths, True)
+elif cmd == ADD:
+    tracklist.AddTracks(absPaths, False)
+elif cmd == PLAY:
+    player.Play()
+elif cmd == NEXT:
+    player.Next()
+elif cmd == STOP:
+    player.Stop()
+elif cmd == PAUSE:
+    player.Pause()
+elif cmd == CLEAR:
+    tracklist.Clear()
+elif cmd == VOLUME:
+    player.VolumeSet(int(sys.argv[2]))
+elif cmd == SHUFFLE:
+    tracklist.SetRandom(True)
+elif cmd == PREVIOUS:
+    player.Prev()

@@ -158,8 +158,8 @@ class TrackPanel(modules.Module):
                 ext      = os.path.splitext(pathFullSize)[1]
                 extThumb = os.path.splitext(pathThumbnail)[1]
 
-                link      = os.path.join(consts.dirCfg, 'current-cover' + ext)
-                linkThumb = os.path.join(consts.dirCfg, 'current-cover-small' + extThumb)
+                link      = os.path.join(consts.USER_CONFIG_DIR, 'current-cover' + ext)
+                linkThumb = os.path.join(consts.USER_CONFIG_DIR, 'current-cover-small' + extThumb)
 
                 os.system('rm -f "%s"' % link)
                 os.system('rm -f "%s"' % linkThumb)

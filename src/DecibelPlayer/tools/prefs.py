@@ -19,47 +19,53 @@
 import os, threading
 from .. import tools
 
+__all__ = ['save', 'set', 'get', 'setCmdLine', 'getCmdLine',
+           'setWidgetsTree', 'getWidgetsTree']
 
-# Load user preferences from the disk
-try:    __usrPrefs = tools.pickleLoad(tools.consts.filePrefs)
-except: __usrPrefs = {}
+## Load user preferences from the disk
+try:
+    _usrPrefs = tools.pickleLoad(tools.consts.filePrefs)
+except:
+    _usrPrefs = {}
 
-__mutex      = threading.Lock()
-"""Prevent concurrent calls to functions"""
+## Used to prevent concurrent calls to functions
+_mutex = threading.Lock()
 
-__appGlobals = {}
-"""Some global values shared by all the components of the application"""
+## Some global values shared by all the components of the application
+_appGlobals = {}
 
 
 def save():
-    """ Save user preferences to the disk """
-    __mutex.acquire()
-    tools.pickleSave(tools.consts.filePrefs, __usrPrefs)
+    """Save user preferences to disk"""
+    _mutex.acquire()
+    tools.pickleSave(tools.consts.filePrefs, _usrPrefs)
     os.chmod(tools.consts.filePrefs, 0600)
-    __mutex.release()
-
+    _mutex.release()
 
 def set(module, name, value):
     """ Change the value of a preference """
-    __mutex.acquire()
-    __usrPrefs[module + '_' + name] = value
-    __mutex.release()
-
+    _mutex.acquire()
+    _usrPrefs[module + '_' + name] = value
+    _mutex.release()
 
 def get(module, name, default=None):
     """ Retrieve the value of a preference """
-    __mutex.acquire()
-    try:    value = __usrPrefs[module + '_' + name]
+    _mutex.acquire()
+    try:    value = _usrPrefs[module + '_' + name]
     except: value = default
-    __mutex.release()
+    _mutex.release()
     return value
 
 
-# Command line used to start the application
-def setCmdLine(cmdLine): __appGlobals['cmdLine'] = cmdLine
-def getCmdLine():        return __appGlobals['cmdLine']
+## Command line used to start the application
+def setCmdLine(cmdLine):
+    _appGlobals['cmdLine'] = cmdLine
+def getCmdLine():
+    return _appGlobals['cmdLine']
 
 
-# Main widgets' tree created by Glade
-def setWidgetsTree(tree): __appGlobals['wTree'] = tree
-def getWidgetsTree():     return __appGlobals['wTree']
+## Main widgets' tree created by Glade
+def setWidgetsTree(tree):
+    _appGlobals['wTree'] = tree
+def getWidgetsTree():
+    return _appGlobals['wTree']

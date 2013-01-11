@@ -1,0 +1,4 @@
+"""
+Base definitions for plugins
+"""
+

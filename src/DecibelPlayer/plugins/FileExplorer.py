@@ -16,64 +16,85 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-from __future__ import absolute_import
-
 import os
-from os.path import isdir, isfile
 from gettext import gettext as _
+
 import gtk
 from gobject import idle_add, TYPE_STRING, TYPE_INT
-from .. import media, modules, tools
-from ..tools   import consts, prefs, icons
-from ..media   import playlist
 
-MOD_INFO = ('File Explorer', _('File Explorer'), _('Browse your file system'), [], True, True, consts.MODCAT_EXPLORER)
-MOD_L10N = MOD_INFO[modules.MODINFO_L10N]
+from DecibelPlayer import media, modules, tools, consts
+from DecibelPlayer.tools   import  prefs, icons
+from DecibelPlayer.media   import playlist
 
-# Default preferences
-PREFS_DEFAULT_MEDIA_FOLDERS     = {_('Home'): consts.dirBaseUsr, _('Root'): '/'}    # List of media folders that are used as roots for the file explorer
-PREFS_DEFAULT_ADD_BY_FILENAME   = False                                             # True if files should be added to the playlist by their filename
-PREFS_DEFAULT_SHOW_HIDDEN_FILES = False                                             # True if hidden files should be shown
+MOD_INFO = {
+    'name': 'File Explorer',
+    'l10n': _('File Explorer'),
+    'desc': _('Browse your file system'),
+    'deps': [],
+    'mandatory': True,
+    'configurable': True,
+    'category': consts.MODCAT_EXPLORER,
+}
+MOD_L10N = MOD_INFO['l10n']
+
+## Default preferences
+
+PREFS_DEFAULT_MEDIA_FOLDERS     = {_('Home'): consts.dirBaseUsr, _('Root'): '/'}
+'''List of media folders that are used as roots for the file explorer'''
+
+PREFS_DEFAULT_ADD_BY_FILENAME   = False
+'''True if files should be added to the playlist by their filename'''
+
+PREFS_DEFAULT_SHOW_HIDDEN_FILES = False
+'''True if hidden files should be shown'''
 
 
-# The format of a row in the treeview
-(
-    ROW_PIXBUF,    # Item icon
-    ROW_NAME,      # Item name
-    ROW_TYPE,      # The type of the item (e.g., directory, file)
-    ROW_FULLPATH   # The full path to the item
-) = range(4)
+## The format of a row in the treeview
+ROW_PIXBUF = 0    # Item icon
+ROW_NAME = 1      # Item name
+ROW_TYPE = 2      # The type of the item (e.g., directory, file)
+ROW_FULLPATH = 3  # The full path to the item
 
 
-# The possible types for a node of the tree
-(
-    TYPE_DIR,      # A directory
-    TYPE_FILE,     # A media file
-    TYPE_NONE      # A fake item, used to display a '+' in front of a directory when needed
-) = range(3)
+## The possible types for a node of the tree
+
+TYPE_DIR = 0
+'''A directory'''
+
+TYPE_FILE = 1
+'''A media file'''
+
+TYPE_NONE = 2
+'''A fake item, used to display a '+' in front of a directory when needed'''
 
 
 class FileExplorer(modules.Module):
-    """ This explorer lets the user browse the disk from a given root directory (e.g., ~/, /) """
+    """This explorer lets the user browse the disk from a given
+    root directory (e.g., ~/, /).
+    """
 
     def __init__(self):
-        """ Constructor """
+        """Constructor"""
         handlers = {
-                        consts.MSG_EVT_APP_QUIT:         self.onAppQuit,
-                        consts.MSG_EVT_APP_STARTED:      self.onAppStarted,
-                        consts.MSG_EVT_EXPLORER_CHANGED: self.onExplorerChanged,
-                   }
+            consts.MSG_EVT_APP_QUIT: self.onAppQuit,
+            consts.MSG_EVT_APP_STARTED: self.onAppStarted,
+            consts.MSG_EVT_EXPLORER_CHANGED: self.onExplorerChanged,
+        }
 
         modules.Module.__init__(self, handlers)
 
 
     def createTree(self):
         """ Create the tree used to display the file system """
-        from ..gui import extTreeview
+        from DecibelPlayer.gui import extTreeview
 
-        columns = (('',   [(gtk.CellRendererPixbuf(), gtk.gdk.Pixbuf), (gtk.CellRendererText(), TYPE_STRING)], True),
-                   (None, [(None, TYPE_INT)],                                                                  False),
-                   (None, [(None, TYPE_STRING)],                                                               False))
+        columns = (
+            ('',   [
+                    (gtk.CellRendererPixbuf(), gtk.gdk.Pixbuf),
+                    (gtk.CellRendererText(), TYPE_STRING)
+                ], True),
+            (None, [(None, TYPE_INT)], False),
+            (None, [(None, TYPE_STRING)], False))
 
         self.tree = extTreeview.ExtTreeView(columns, True)
 
@@ -87,17 +108,26 @@ class FileExplorer(modules.Module):
 
 
     def getTreeDump(self, path=None):
-        """ Recursively dump the given tree starting at path (None for the root of the tree) """
+        """
+        Recursively dump the given tree starting at path
+        (None for the root of the tree)
+        """
         list = []
 
         for child in self.tree.iterChildren(path):
             row = self.tree.getRow(child)
 
-            if self.tree.getNbChildren(child) == 0: grandChildren = None
-            elif self.tree.row_expanded(child):     grandChildren = self.getTreeDump(child)
-            else:                                   grandChildren = []
+            if self.tree.getNbChildren(child) == 0:
+                grandChildren = None
+            elif self.tree.row_expanded(child):
+                grandChildren = self.getTreeDump(child)
+            else:
+                grandChildren = []
 
-            list.append([(row[ROW_NAME], row[ROW_TYPE], row[ROW_FULLPATH]), grandChildren])
+            list.append([
+                (row[ROW_NAME], row[ROW_TYPE], row[ROW_FULLPATH]),
+                grandChildren,
+            ])
 
         return list
 
@@ -126,11 +156,11 @@ class FileExplorer(modules.Module):
         """ Return a dictionary representing the current state of the tree """
         if self.currRoot is not None:
             self.treeState[self.currRoot] = {
-                        'tree-state':     self.getTreeDump(),
-                        'selected-paths': self.tree.getSelectedPaths(),
-                        'vscrollbar-pos': self.scrolled.get_vscrollbar().get_value(),
-                        'hscrollbar-pos': self.scrolled.get_hscrollbar().get_value(),
-                   }
+                'tree-state':     self.getTreeDump(),
+                'selected-paths': self.tree.getSelectedPaths(),
+                'vscrollbar-pos': self.scrolled.get_vscrollbar().get_value(),
+                'hscrollbar-pos': self.scrolled.get_hscrollbar().get_value(),
+            }
 
 
     def setShowHiddenFiles(self, showHiddenFiles):
@@ -149,11 +179,15 @@ class FileExplorer(modules.Module):
             Replace/extend the tracklist
             If 'path' is None, use the current selection
         """
-        if path is None: tracks = media.getTracks([row[ROW_FULLPATH] for row in self.tree.getSelectedRows()], self.addByFilename, not self.showHiddenFiles)
-        else:            tracks = media.getTracks([self.tree.getRow(path)[ROW_FULLPATH]], self.addByFilename, not self.showHiddenFiles)
+        if path is None:
+            tracks = media.getTracks([row[ROW_FULLPATH] for row in self.tree.getSelectedRows()], self.addByFilename, not self.showHiddenFiles)
+        else:
+            tracks = media.getTracks([self.tree.getRow(path)[ROW_FULLPATH]], self.addByFilename, not self.showHiddenFiles)
 
-        if replace: modules.postMsg(consts.MSG_CMD_TRACKLIST_SET, {'tracks': tracks, 'playNow': True})
-        else:       modules.postMsg(consts.MSG_CMD_TRACKLIST_ADD, {'tracks': tracks, 'playNow': False})
+        if replace:
+            modules.postMsg(consts.MSG_CMD_TRACKLIST_SET, {'tracks': tracks, 'playNow': True})
+        else:
+            modules.postMsg(consts.MSG_CMD_TRACKLIST_ADD, {'tracks': tracks, 'playNow': False})
 
 
     def renameFolder(self, oldName, newName):
@@ -205,9 +239,9 @@ class FileExplorer(modules.Module):
         directories = []
 
         for (file, path) in tools.listDir(directory, self.showHiddenFiles):
-            if isdir(path):
+            if os.path.isdir(path):
                 directories.append((icons.dirMenuIcon(), tools.htmlEscape(unicode(file, errors='replace')), TYPE_DIR, path))
-            elif isfile(path):
+            elif os.path.isfile(path):
                 if media.isSupported(file):
                     mediaFiles.append((icons.mediaFileMenuIcon(), tools.htmlEscape(unicode(file, errors='replace')), TYPE_FILE, path))
                 elif playlist.isSupported(file):
@@ -250,7 +284,7 @@ class FileExplorer(modules.Module):
             hasContent = False
             if os.access(directory, os.R_OK | os.X_OK):
                 for (file, path) in tools.listDir(directory, self.showHiddenFiles):
-                    if isdir(path) or (isfile(path) and (media.isSupported(file) or playlist.isSupported(file))):
+                    if os.path.isdir(path) or (os.path.isfile(path) and (media.isSupported(file) or playlist.isSupported(file))):
                         hasContent = True
                         break
 
@@ -481,7 +515,7 @@ class FileExplorer(modules.Module):
     def configure(self, parent):
         """ Show the configuration dialog """
         if self.cfgWin is None:
-            from ..gui import extListview, window
+            from DecibelPlayer.gui import extListview, window
 
             self.cfgWin = window.Window('FileExplorer.ui', 'vbox1', __name__, MOD_L10N, 370, 400)
             # Create the list of folders
@@ -514,13 +548,15 @@ class FileExplorer(modules.Module):
 
     def populateFolderList(self):
         """ Populate the list of known folders """
-        self.cfgList.replaceContent([(name, icons.dirToolbarIcon(), '<b>%s</b>\n<small>%s</small>' % (tools.htmlEscape(name), tools.htmlEscape(path)))
-                                     for name, path in sorted(self.folders.iteritems())])
+        self.cfgList.replaceContent([
+            (name, icons.dirToolbarIcon(), '<b>%s</b>\n<small>%s</small>' % (tools.htmlEscape(name), tools.htmlEscape(path)))
+                 for name, path in sorted(self.folders.iteritems())
+        ])
 
 
     def onAddFolder(self, btn):
         """ Let the user add a new folder to the list """
-        from ..gui import selectPath
+        from DecibelPlayer.gui import selectPath
 
         result = selectPath.SelectPath(MOD_L10N, self.cfgWin, self.folders.keys()).run()
 
@@ -533,7 +569,7 @@ class FileExplorer(modules.Module):
 
     def onRemoveSelectedFolder(self, list):
         """ Remove the selected media folder """
-        from .. import gui
+        from DecibelPlayer import gui
 
         if list.getSelectedRowsCount() == 1:
             remark   = _('You will be able to add this root folder again later on if you wish so.')
@@ -561,7 +597,7 @@ class FileExplorer(modules.Module):
 
     def onRenameFolder(self, btn):
         """ Let the user rename a folder """
-        from ..gui import selectPath
+        from DecibelPlayer.gui import selectPath
 
         name         = self.cfgList.getSelectedRows()[0][0]
         forbidden    = [rootName for rootName in self.folders if rootName != name]
@@ -596,12 +632,16 @@ class FileExplorer(modules.Module):
 
     def onHelp(self, btn):
         """ Display a small help message box """
-        from ..gui import help
-
-        helpDlg = help.HelpDlg(MOD_L10N)
-        helpDlg.addSection(_('Description'),
-                           _('This module allows you to browse the files on your drives.'))
-        helpDlg.addSection(_('Usage'),
-                           _('At least one root folder must be added to browse your files. This folder then becomes the root of the '
-                             'file explorer tree in the main window.'))
+        from DecibelPlayer.gui.help import HelpDlg
+        helpDlg = HelpDlg(MOD_L10N)
+        helpDlg.addSection(
+            _('Description'),
+            _('This module allows you to browse the files on your drives.'))
+        helpDlg.addSection(
+            _('Usage'),
+            _('At least one root folder must be added to browse your files. '
+              'This folder then becomes the root of the file explorer tree '
+              'in the main window.'))
         helpDlg.show(self.cfgWin)
+
+PLUGIN = FileExplorer

@@ -16,6 +16,9 @@ setup(
         ## we have some issues with building pygtk (must use ./configure && make
         ## instead of setup.py, ...)
 
+        'python-magic', # Used to discover file type
+        'mutagen', # To extract information from mp3 files
+
 
         #'dbus',
         #'pygtk',

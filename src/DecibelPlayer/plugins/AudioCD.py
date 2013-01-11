@@ -23,15 +23,23 @@ from gettext import gettext as _
 
 import gobject, gtk
 
-from DecibelPlayer import gui, modules, tools
+from DecibelPlayer import gui, tools, modules
 from DecibelPlayer.gui import extTreeview
 from DecibelPlayer.tools import consts, icons, prefs, sec2str
 from DecibelPlayer.tools.log import logger
 from DecibelPlayer.media.track.cdTrack import CDTrack
 
-MOD_INFO = ('Audio CD', _('Audio CD'), _('Play audio discs'), ('DiscID', 'CDDB'), False, True, consts.MODCAT_EXPLORER)
+MOD_INFO = {
+    'name': 'Audio CD',
+    'l10n': _('Audio CD'),
+    'desc': _('Play audio discs'),
+    'deps': ('DiscID', 'CDDB'),
+    'mandatory': False,
+    'configurable': True,
+    'category': consts.MODCAT_EXPLORER,
+}
 
-MOD_L10N             = MOD_INFO[modules.MODINFO_L10N]
+MOD_L10N             = MOD_INFO['l10n']
 PREFS_DFT_DEVICE     = '/dev/cdrom'
 PREFS_DFT_USE_CDDB   = True
 PREFS_DFT_USE_CACHE  = True
@@ -39,32 +47,30 @@ PREFS_DFT_READ_SPEED = 1
 
 
 # Format of a row in the treeview
-(
-    ROW_PIXBUF,
-    ROW_LENGTH,
-    ROW_NAME,
-    ROW_TRACK
-) = range(4)
+ROW_PIXBUF = 0
+ROW_LENGTH = 1
+ROW_NAME = 2
+ROW_TRACK = 3
 
 
-# All CD-ROM read speeds
+# All CD-ROM read speeds (?????)
 READ_SPEEDS = {
-                 1 :  0,
-                 2 :  1,
-                 4 :  2,
-                 8 :  3,
-                10 :  4,
-                12 :  5,
-                20 :  6,
-                32 :  7,
-                36 :  8,
-                40 :  9,
-                48 : 10,
-                50 : 11,
-                52 : 12,
-                56 : 13,
-                72 : 14,
-              }
+     1 :  0,
+     2 :  1,
+     4 :  2,
+     8 :  3,
+    10 :  4,
+    12 :  5,
+    20 :  6,
+    32 :  7,
+    36 :  8,
+    40 :  9,
+    48 : 10,
+    50 : 11,
+    52 : 12,
+    56 : 13,
+    72 : 14,
+}
 
 
 # Information returned by disc_id()
@@ -287,7 +293,7 @@ class AudioCD(modules.ThreadedModule):
         self.cfgWin   = None
         self.expName  = MOD_L10N
         self.scrolled = gtk.ScrolledWindow()
-        self.cacheDir = os.path.join(consts.dirCfg, MOD_INFO[modules.MODINFO_NAME])
+        self.cacheDir = os.path.join(consts.USER_CONFIG_DIR, MOD_INFO[modules.MODINFO_NAME])
         # The album length is written in a smaller font, with a lighter color
         txtRdrLen.set_property('scale', 0.85)
         txtRdrLen.set_property('foreground-gdk', self.tree.get_style().text[gtk.STATE_INSENSITIVE])
@@ -387,8 +393,9 @@ class AudioCD(modules.ThreadedModule):
 
     def configure(self, parent):
         """ Show the configuration window """
+        from DecibelPlayer.gui.window import Window
         if self.cfgWin is None:
-            self.cfgWin = gui.window.Window('AudioCD.ui', 'vbox1', __name__, MOD_L10N, 335, 270)
+            self.cfgWin = Window('AudioCD.ui', 'vbox1', __name__, MOD_L10N, 335, 270)
             self.cfgWin.getWidget('btn-ok').connect('clicked', self.onBtnOk)
             self.cfgWin.getWidget('btn-help').connect('clicked', self.onBtnHelp)
             self.cfgWin.getWidget('chk-useCDDB').connect('toggled', self.onUseCDDBToggled)
@@ -410,11 +417,16 @@ class AudioCD(modules.ThreadedModule):
 
         if not self.cfgWin.isVisible():
             self.cfgWin.getWidget('btn-ok').grab_focus()
-            self.cfgWin.getWidget('txt-device').set_text(prefs.get(__name__, 'device', PREFS_DFT_DEVICE))
-            self.cfgWin.getWidget('chk-useCDDB').set_active(prefs.get(__name__, 'use-cddb', PREFS_DFT_USE_CDDB))
-            self.cfgWin.getWidget('chk-useCache').set_sensitive(prefs.get(__name__, 'use-cddb', PREFS_DFT_USE_CDDB))
-            self.cfgWin.getWidget('chk-useCache').set_active(prefs.get(__name__, 'use-cache', PREFS_DFT_USE_CACHE))
-            self.cfgWin.getWidget('combo-read-speed').set_active(READ_SPEEDS[prefs.get(__name__, 'read-speed', PREFS_DFT_READ_SPEED)])
+            self.cfgWin.getWidget('txt-device')\
+                .set_text(prefs.get(__name__, 'device', PREFS_DFT_DEVICE))
+            self.cfgWin.getWidget('chk-useCDDB')\
+                .set_active(prefs.get(__name__, 'use-cddb', PREFS_DFT_USE_CDDB))
+            self.cfgWin.getWidget('chk-useCache')\
+                .set_sensitive(prefs.get(__name__, 'use-cddb', PREFS_DFT_USE_CDDB))
+            self.cfgWin.getWidget('chk-useCache')\
+                .set_active(prefs.get(__name__, 'use-cache', PREFS_DFT_USE_CACHE))
+            self.cfgWin.getWidget('combo-read-speed')\
+                .set_active(READ_SPEEDS[prefs.get(__name__, 'read-speed', PREFS_DFT_READ_SPEED)])
 
         self.cfgWin.show()
 
@@ -458,11 +470,14 @@ class AudioCD(modules.ThreadedModule):
 
     def onBtnHelp(self, btn):
         """ Display a small help message box """
-        helpDlg = gui.help.HelpDlg(MOD_L10N)
-        helpDlg.addSection(_('Description'),
-                           _('This module lets you play audio discs from your CD-ROM device.'))
-        helpDlg.addSection(_('Compact Disc Data Base (CDDB)'),
-                           _('Disc information, such as artist and album title, may be automatically downloaded '
-                             'from an online database if you wish so. This information may also be saved on your '
-                             'hard drive to avoid downloading it again the next time you play the same disc.'))
+        from DecibelPlayer.gui.help import HelpDlg
+        helpDlg = HelpDlg(MOD_L10N)
+        helpDlg.addSection(
+            _('Description'),
+            _('This module lets you play audio discs from your CD-ROM device.'))
+        helpDlg.addSection(
+            _('Compact Disc Data Base (CDDB)'),
+            _('Disc information, such as artist and album title, may be automatically downloaded '
+              'from an online database if you wish so. This information may also be saved on your '
+              'hard drive to avoid downloading it again the next time you play the same disc.'))
         helpDlg.show(self.cfgWin)

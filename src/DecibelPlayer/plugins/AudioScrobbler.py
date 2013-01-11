@@ -240,7 +240,7 @@ class AudioScrobbler(modules.ThreadedModule):
 
     def saveCache(self):
         """ Save the cache to the disk """
-        file   = os.path.join(consts.dirCfg, CACHE_FILE)
+        file   = os.path.join(consts.USER_CONFIG_DIR, CACHE_FILE)
         output = open(file, 'w')
         output.writelines('\n'.join(self.cache))
         output.close()
@@ -312,7 +312,7 @@ class AudioScrobbler(modules.ThreadedModule):
 
         # Load cache from the disk
         try:
-            input      = open(os.path.join(consts.dirCfg, CACHE_FILE))
+            input      = open(os.path.join(consts.USER_CONFIG_DIR, CACHE_FILE))
             self.cache = [strippedTrack for strippedTrack in [track.strip() for track in input.readlines()] if len(strippedTrack) != 0]
             input.close()
         except:

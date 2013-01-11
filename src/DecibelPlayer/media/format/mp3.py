@@ -19,7 +19,6 @@
 from __future__ import absolute_import
 from . import createFileTrack
 
-
 def getTrack(filename):
     """ Return a Track created from an mp3 file """
     from mutagen.mp3 import MP3

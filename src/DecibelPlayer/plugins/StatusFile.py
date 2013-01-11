@@ -28,7 +28,7 @@ MOD_INFO = ('Status File', _('Status File'), _('Generate a text file with the cu
 
 
 # Default preferences
-PREFS_DEFAULT_FILE   = os.path.join(consts.dirCfg, 'now-playing.txt')
+PREFS_DEFAULT_FILE   = os.path.join(consts.USER_CONFIG_DIR, 'now-playing.txt')
 PREFS_DEFAULT_STATUS = 'Now playing {title}\nby {artist}'
 
 
